@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Signal — AI analyst for CRM &amp; partner teams</title>
+<meta name="description" content="Demo: an AI analytics assistant for CRM and partner teams. Ask questions in plain English and get answers with charts, tables and SQL. Fictional data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F3F5F4;--surface:#FFFFFF;--surface-2:#EBF0EE;--ink:#13201D;--muted:#5A6B66;--faint:#8A9994;--line:#D6DFDC;
+  --accent:#0B7A6E;--accent-ink:#FFFFFF;--accent-soft:#DDF0EB;--good:#1D7A4F;--bad:#B42318;--bad-soft:#FCE8E6;
+  --c1:#0B7A6E;--c2:#D97706;--c3:#5B5BD6;--c4:#C2417A;--c5:#0E8FB0;--c6:#5E8C1E;--c7:#8B4FD0;--c8:#6B7B85;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){:root{
+  color-scheme:dark;--bg:#0D1412;--surface:#141D1A;--surface-2:#1B2622;--ink:#E4ECE9;--muted:#91A39E;--faint:#6C7D78;--line:#283733;
+  --accent:#3FC3AE;--accent-ink:#05201B;--accent-soft:#16352F;--good:#5CC690;--bad:#F27A6B;--bad-soft:#3A1D1A;
+  --c1:#3FC3AE;--c2:#F0A640;--c3:#8C8CF2;--c4:#E67BA8;--c5:#4CC0DE;--c6:#9BC45A;--c7:#B98AF0;--c8:#9AAAB3;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:290px minmax(0,1fr);height:100%}
+
+/* sidebar */
+.side{border-right:1px solid var(--line);background:var(--surface);overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{width:32px;height:32px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex:none}
+.brand h1{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px}
+.src{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.src-head{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--surface-2);font-weight:600;font-size:13.5px}
+.pill{font-size:11px;font-weight:500;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:1px 8px}
+details.tbl{border-top:1px solid var(--line)}
+details.tbl summary{list-style:none;display:flex;justify-content:space-between;gap:8px;padding:7px 12px;font-family:var(--mono);font-size:12.5px;cursor:pointer}
+details.tbl summary::-webkit-details-marker{display:none}
+details.tbl summary span:last-child{color:var(--muted)}
+details.tbl[open] summary{background:var(--surface-2)}
+.cols{padding:6px 12px 10px;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.55}
+ol.how{list-style:none;display:flex;flex-direction:column;gap:10px}
+ol.how li{display:flex;gap:10px;font-size:13.5px;color:var(--muted)}
+ol.how li i{font-style:normal;flex:none;width:20px;height:20px;border-radius:6px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:12px;font-weight:700}
+ol.how b{color:var(--ink);font-weight:600}
+.side-foot{font-size:12px;color:var(--faint);margin-top:auto;border-top:1px solid var(--line);padding-top:14px}
+.side-foot a{color:var(--muted)}
+.close-side{display:none}
+
+/* main */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 24px;border-bottom:1px solid var(--line);background:var(--surface)}
+.topbar .t{font-weight:600;font-size:15px}
+.topbar .sub{color:var(--muted);font-size:12.5px}
+.tabs{display:flex;background:var(--surface-2);border-radius:10px;padding:3px;gap:2px}
+.tabs button{white-space:nowrap;padding:6px 14px;border-radius:8px;font-size:13.5px;font-weight:500;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.menu-btn{display:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:13px}
+.view{flex:1;overflow-y:auto;min-height:0}
+.wrap{max-width:900px;margin:0 auto;padding:24px}
+
+/* overview */
+.ov-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.ov-head h2{font-size:22px;letter-spacing:-.01em}
+.ov-head p{color:var(--muted);font-size:13.5px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
+.kpi .l{font-size:12.5px;color:var(--muted)}
+.kpi .v{font-size:24px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi .d{font-size:12.5px;font-variant-numeric:tabular-nums}
+.kpi .d.up{color:var(--good)}.kpi .d.down{color:var(--bad)}
+.kpi .d span{color:var(--faint)}
+.grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-bottom:12px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel h3{font-size:14px;font-weight:600;margin-bottom:2px}
+.panel .ph{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:8px}
+.panel .ph button{font-size:12.5px;color:var(--accent);font-weight:500;white-space:nowrap}
+.panel .ps{font-size:12.5px;color:var(--muted)}
+.insight{background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;font-size:14px;display:flex;gap:10px;margin-bottom:12px}
+.insight b{font-weight:600}
+
+/* chat */
+.chat{display:flex;flex-direction:column;height:100%}
+.stream{flex:1;overflow-y:auto;min-height:0}
+.stream-in{max-width:820px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:16px}
+.welcome h2{font-size:22px;letter-spacing:-.01em;margin-bottom:4px}
+.welcome p{color:var(--muted)}
+.q{align-self:flex-end;max-width:85%;background:var(--accent);color:var(--accent-ink);border-radius:16px 16px 4px 16px;padding:9px 14px}
+.a{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.a-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.a-head h3{font-size:15.5px;font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--muted);white-space:nowrap}
+.answer p{margin:0 0 6px}
+.answer b{font-weight:600}
+.thinking{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13.5px}
+.spin{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.steps{list-style:none;font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.chart-box{width:100%;overflow-x:auto}
+.chart-box svg{display:block;width:100%;height:auto}
+.bar{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12.5px;color:var(--muted);background:var(--surface)}
+.btn:hover{color:var(--ink);border-color:var(--accent)}
+.btn[aria-pressed="true"]{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+pre.sql{font-family:var(--mono);font-size:12px;background:var(--surface-2);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-height:360px;overflow-y:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:left}
+th{font-weight:600;font-size:12px;color:var(--muted);background:var(--surface-2);position:sticky;top:0}
+td.n,th.n{text-align:right}
+tr:last-child td{border-bottom:0}
+.more{font-size:12.5px;color:var(--muted);padding:6px 10px}
+.next{display:flex;flex-wrap:wrap;gap:6px}
+.next span{font-size:12px;color:var(--faint);align-self:center}
+.next button,.chip{font-size:13px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;text-align:left}
+.next button:hover,.chip:hover{border-color:var(--accent);background:var(--accent-soft)}
+.dock{border-top:1px solid var(--line);background:var(--surface)}
+.dock-in{max-width:820px;margin:0 auto;padding:10px 24px 14px;display:flex;flex-direction:column;gap:8px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.chip{white-space:nowrap;flex:none}
+.composer{display:flex;gap:8px;align-items:flex-end;border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 14px;background:var(--bg)}
+.composer:focus-within{border-color:var(--accent)}
+.composer textarea{flex:1;border:0;outline:0;background:transparent;resize:none;max-height:140px;padding:5px 0}
+.send{background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:7px 16px;font-weight:600;font-size:14px}
+.hint{font-size:11.5px;color:var(--faint);text-align:center}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:4px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.donut-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.donut-row svg{width:170px;flex:none}
+.donut-row .legend{flex-direction:column;gap:6px;font-size:12.5px}
+
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;inset:0 auto 0 0;width:min(320px,88vw);z-index:20;transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.2)}
+  .side.open{transform:none}
+  .close-side{display:block;align-self:flex-start;font-size:13px;color:var(--accent)}
+  .menu-btn{display:block}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .topbar{padding:10px 14px}
+  .topbar .sub{display:none}
+  .topbar .t{font-size:13.5px;line-height:1.25}
+  .tabs button{padding:6px 10px}
+  .kpi .v{font-size:21px}
+  .wrap,.stream-in{padding:16px}
+  .dock-in{padding:8px 12px 12px}
+}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <button class="close-side" id="closeSide" type="button">← Back</button>
+    <div class="brand">
+      <div class="mark"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M1 10h3l2-6 3 11 2.5-8L13 10h4" fill="none" stroke="var(--accent-ink)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h1>Signal<small>AI analyst for CRM &amp; partner teams</small></h1>
+    </div>
+    <section>
+      <p class="label">Data sources</p>
+      <div id="sources"></div>
+    </section>
+    <section>
+      <p class="label">How it works</p>
+      <ol class="how">
+        <li><i>1</i><span><b>Ask in plain English.</b> "Which payment provider fails most often in Germany?"</span></li>
+        <li><i>2</i><span><b>The AI writes SQL</b> against the CRM and partner databases, runs it, and fixes errors itself.</span></li>
+        <li><i>3</i><span><b>You get an answer</b> with the key numbers, a chart, the table, the SQL and a CSV export.</span></li>
+      </ol>
+    </section>
+    <section>
+      <p class="label">In production</p>
+      <ol class="how">
+        <li><i>→</i><span>Read-only database replicas, SELECT access only.</span></li>
+        <li><i>→</i><span>A fixed metrics dictionary, so "net revenue" means the same thing for everyone.</span></li>
+        <li><i>→</i><span>Row limits and masking of personal data.</span></li>
+      </ol>
+    </section>
+    <p class="side-foot">Demo for <b>Lumen Skin</b>, a fictional skincare brand. All data is generated (May–Oct 2026). Based on a real client project, rebuilt without any client data.<br><br>Designed &amp; built by <a href="https://elendneprovska-a11y.github.io/">Elena Kuznetsova</a></p>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div><div class="t">Lumen Skin · CRM &amp; Partners</div><div class="sub">Customers DB · Partner DB · updated 31 Oct 2026</div></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tabOv" aria-selected="true" aria-controls="viewOv">Overview</button>
+          <button role="tab" id="tabAsk" aria-selected="false" aria-controls="viewAsk">Ask AI</button>
+        </div>
+        <button class="menu-btn" id="openSide" type="button">Data</button>
+      </div>
+    </div>
+
+    <div class="view" id="viewOv" role="tabpanel"><div class="wrap" id="ov"></div></div>
+
+    <div class="view" id="viewAsk" role="tabpanel" hidden>
+      <div class="chat">
+        <div class="stream" id="stream"><div class="stream-in" id="thread">
+          <div class="welcome">
+            <h2>Ask anything about customers, payments and partners</h2>
+            <p>Answers come with a chart, a table and the SQL behind them. Try a suggested question below.</p>
+          </div>
+        </div></div>
+        <div class="dock"><div class="dock-in">
+          <div class="chips" id="chips"></div>
+          <form class="composer" id="composer">
+            <textarea id="input" rows="1" placeholder="e.g. Which partners bring customers who never order?" aria-label="Your question"></textarea>
+            <button class="send" type="submit">Ask</button>
+          </form>
+          <div class="hint">Public demo: questions are matched to the closest prepared analysis. In production, the AI writes new SQL for any question.</div>
+        </div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+"use strict";
+// ================= Demo data (deterministic) =================
+function buildDemoData() {
+  let s = 20261031;
+  const rnd = () => { s |= 0; s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const wpick = (pairs) => { const tot = pairs.reduce((a, p) => a + p[1], 0); let r = rnd() * tot; for (const p of pairs) { if ((r -= p[1]) <= 0) return p[0]; } return pairs[pairs.length - 1][0]; };
+  const logn = (mu, sd) => { const u = 1 - rnd(), v = rnd(); return Math.exp(mu + sd * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)); };
+  const r2 = (x) => Math.round(x * 100) / 100;
+  const DAY = 86400000;
+  const START = Date.UTC(2026, 4, 1), END = Date.UTC(2026, 9, 31);
+  const iso = (t) => new Date(t).toISOString().slice(0, 10);
+  const weekStart = (t) => { const d = new Date(t); const wd = (d.getUTCDay() + 6) % 7; return iso(t - wd * DAY); };
+
+  const countries = {
+    UK: { cur: 'GBP', w: 34, aov: 3.85, methods: [['Card', 'Stripe', 45], ['PayPal', 'PayPal', 25], ['Apple Pay', 'Stripe', 15], ['Pay later', 'Klarna', 15]] },
+    US: { cur: 'USD', w: 14, aov: 3.95, methods: [['Card', 'Stripe', 50], ['PayPal', 'PayPal', 20], ['Apple Pay', 'Stripe', 20], ['Pay later', 'Afterpay', 10]] },
+    DE: { cur: 'EUR', w: 10, aov: 3.85, methods: [['PayPal', 'PayPal', 40], ['Card', 'Adyen', 25], ['Pay later', 'Klarna', 35]] },
+    FR: { cur: 'EUR', w: 8, aov: 3.8, methods: [['Card', 'Adyen', 60], ['PayPal', 'PayPal', 25], ['Apple Pay', 'Adyen', 15]] },
+    NL: { cur: 'EUR', w: 6, aov: 3.75, methods: [['iDEAL', 'Adyen', 65], ['Card', 'Adyen', 20], ['PayPal', 'PayPal', 15]] },
+    IE: { cur: 'EUR', w: 6, aov: 3.8, methods: [['Card', 'Stripe', 55], ['PayPal', 'PayPal', 25], ['Apple Pay', 'Stripe', 20]] },
+    SE: { cur: 'SEK', w: 5, aov: 3.9, methods: [['Pay later', 'Klarna', 55], ['Card', 'Adyen', 30], ['Swish', 'Adyen', 15]] },
+    ES: { cur: 'EUR', w: 5, aov: 3.6, methods: [['Card', 'Adyen', 55], ['PayPal', 'PayPal', 30], ['Bizum', 'Adyen', 15]] },
+    IT: { cur: 'EUR', w: 5, aov: 3.65, methods: [['Card', 'Adyen', 45], ['PayPal', 'PayPal', 45], ['Pay later', 'Klarna', 10]] },
+    AU: { cur: 'AUD', w: 7, aov: 3.9, methods: [['Card', 'Stripe', 50], ['Pay later', 'Afterpay', 30], ['PayPal', 'PayPal', 20]] },
+  };
+  const failRate = { Stripe: 0.05, Adyen: 0.08, PayPal: 0.04, Klarna: 0.12, Afterpay: 0.21 };
+
+  const pRaw = [
+    ['GlowEdit Magazine', 'RevShare', 0, 15, 'Sophie', 'UK', 1.3, 0.34, 'Editorial'],
+    ['SkinScience Reviews', 'RevShare', 0, 12, 'Sophie', 'US', 1.25, 0.32, 'SEO'],
+    ['VoucherBox UK', 'CPA', 12, 0, 'James', 'UK', 0.7, 0.45, 'Coupons'],
+    ['DealDrop', 'CPA', 10, 0, 'James', 'DE', 0.65, 0.42, 'Coupons'],
+    ['@dermwithdana', 'Hybrid', 8, 8, 'Priya', 'US', 1.15, 0.30, 'Creators'],
+    ['The Beauty Pod', 'CPA', 15, 0, 'Priya', 'UK', 1.1, 0.27, 'Podcasts'],
+    ['TikTok Creators Collective', 'CPA', 9, 0, 'Priya', 'UK', 0.6, 0.20, 'Creators'],
+    ['Clean Beauty Weekly', 'RevShare', 0, 12, 'Sophie', 'IE', 1.2, 0.33, 'Newsletter'],
+    ['BeautyCompare', 'RevShare', 0, 10, 'James', 'DE', 1.0, 0.30, 'Comparison'],
+    ['CashBack Club', 'CPA', 11, 0, 'James', 'UK', 0.55, 0.38, 'Cashback'],
+    ['Nordic Glow Blog', 'RevShare', 0, 14, 'Sophie', 'SE', 1.05, 0.31, 'Editorial'],
+    ['Aussie Skin Edit', 'Hybrid', 7, 8, 'Priya', 'AU', 1.05, 0.29, 'Creators'],
+    ['Paris Beauté Club', 'Hybrid', 8, 8, 'Sophie', 'FR', 1.0, 0.28, 'Community'],
+    ['Retarget Network', 'CPA', 9, 0, 'James', 'NL', 0.45, 0.16, 'Paid social'],
+  ];
+  const partners = pRaw.map((a, i) => ({ partner_id: 201 + i, partner_name: a[0], deal_type: a[1], cpa_gbp: a[2], revshare_pct: a[3], manager: a[4], main_market: a[5], channel: a[8], created_at: iso(Date.UTC(2025, i % 12, 3 + i)) }));
+  const pQ = {}; pRaw.forEach((a, i) => { pQ[201 + i] = { val: a[6], conv: a[7], geo: a[5] }; });
+
+  const customers = [], payments = [], activity = [];
+  let cid = 300000, payid = 7000000;
+  const days = Math.round((END - START) / DAY);
+  for (let d = 0; d <= days; d++) {
+    const t = START + d * DAY;
+    const growth = 1 + d / days * 0.35; const weekend = [0, 6].includes(new Date(t).getUTCDay()) ? 1.2 : 1;
+    const n = Math.round((22 + rnd() * 10) * growth * weekend);
+    for (let k = 0; k < n; k++) {
+      const organic = rnd() < 0.25;
+      const pid = organic ? null : wpick(partners.map((a) => [a.partner_id, a.deal_type === 'CPA' ? 10 : 7]));
+      const q = pid ? pQ[pid] : { val: 1.15, conv: 0.36, geo: null };
+      const cc = q.geo && rnd() < 0.6 ? q.geo : wpick(Object.entries(countries).map(([c, v]) => [c, v.w]));
+      const C = countries[cc];
+      const device = rnd() < 0.68 ? 'mobile' : 'desktop';
+      const os = device === 'mobile' ? (rnd() < 0.6 ? 'iOS' : 'Android') : (rnd() < 0.7 ? 'Windows' : 'macOS');
+      const c = { customer_id: ++cid, partner_id: pid, signup_date: iso(t), signup_month: iso(t).slice(0, 7), country: cc, currency: C.cur, device, os, first_order_date: null, tier: 'Member', status: 'active' };
+      customers.push(c);
+      if (rnd() > q.conv) {
+        if (rnd() < 0.12) { const m = wpick(C.methods.map((x) => [x, x[2]])); const ta = t + Math.floor(rnd() * 3) * DAY;
+          if (ta <= END) payments.push({ payment_id: ++payid, customer_id: c.customer_id, type: 'order', status: 'failed', amount_gbp: r2(logn(C.aov - 0.1, 0.45)), currency: C.cur, method: m[0], provider: m[1], pay_date: iso(ta), pay_month: iso(ta).slice(0, 7), pay_week: weekStart(ta), order_number: 1, is_first_order: false }); }
+        if (rnd() < 0.08) c.status = 'unsubscribed';
+        continue;
+      }
+      let tt = t + Math.floor(logn(0, 1.0)) * DAY; if (tt > END) continue;
+      const nOrd = Math.max(1, Math.round(logn(1.15 * q.val, 0.65)));
+      const gapMu = Math.log(20 + rnd() * 40);
+      let ordNo = 0, total = 0; const byMonth = {};
+      const pref = wpick(C.methods.map((x) => [x, x[2]]));
+      for (let j = 0; j < nOrd * 1.25 && tt <= END; j++) {
+        const m = rnd() < 0.75 ? pref : wpick(C.methods.map((x) => [x, x[2]]));
+        const amt = r2(logn(C.aov + 0.12 * Math.log(q.val + 0.5) + Math.min(ordNo, 5) * 0.05, 0.45));
+        const ok = !(rnd() < failRate[m[1]] * (ordNo === 0 ? 1.25 : 0.9));
+        if (ok) ordNo++;
+        const dt = iso(tt);
+        payments.push({ payment_id: ++payid, customer_id: c.customer_id, type: 'order', status: ok ? 'success' : 'failed', amount_gbp: amt, currency: C.cur, method: m[0], provider: m[1], pay_date: dt, pay_month: dt.slice(0, 7), pay_week: weekStart(tt), order_number: ok ? ordNo : ordNo + 1, is_first_order: ok && ordNo === 1 });
+        if (ok) { total += amt; const mo = dt.slice(0, 7); byMonth[mo] = byMonth[mo] || { orders: 0, gross: 0, ref: 0 }; byMonth[mo].orders++; byMonth[mo].gross += amt; if (ordNo === 1) c.first_order_date = dt; }
+        if (ok && rnd() < 0.07) {
+          const rt = tt + Math.floor(3 + rnd() * 12) * DAY;
+          if (rt <= END) { const ra = r2(amt * (rnd() < 0.6 ? 1 : 0.3 + rnd() * 0.5)); const rdt = iso(rt);
+            payments.push({ payment_id: ++payid, customer_id: c.customer_id, type: 'refund', status: rnd() < 0.97 ? 'success' : 'failed', amount_gbp: ra, currency: C.cur, method: m[0], provider: m[1], pay_date: rdt, pay_month: rdt.slice(0, 7), pay_week: weekStart(rt), order_number: null, is_first_order: false });
+            const last = payments[payments.length - 1]; if (last.status === 'success') { const mo = rdt.slice(0, 7); byMonth[mo] = byMonth[mo] || { orders: 0, gross: 0, ref: 0 }; byMonth[mo].ref += ra; } }
+        }
+        tt += Math.max(4, Math.round(logn(gapMu, 0.5))) * DAY;
+      }
+      if (total > 300) c.tier = 'Gold'; else if (total > 150) c.tier = 'Silver';
+      if (rnd() < 0.05) c.status = 'unsubscribed';
+      for (const [mo, v] of Object.entries(byMonth)) {
+        const disc = r2(v.gross * (0.04 + rnd() * 0.1));
+        activity.push({ customer_id: c.customer_id, act_month: mo, orders: v.orders, gross_sales_gbp: r2(v.gross), refunds_gbp: r2(v.ref), discounts_gbp: disc, net_revenue_gbp: r2(v.gross - v.ref - disc) });
+      }
+    }
+  }
+  const sByKey = {}, qByKey = {}, netBy = {};
+  for (const c of customers) if (c.partner_id) { const k = c.partner_id + '|' + c.signup_date; sByKey[k] = (sByKey[k] || 0) + 1; }
+  const traffic = [];
+  for (const a of partners) for (let d = 0; d <= days; d++) {
+    const dt = iso(START + d * DAY); const su = sByKey[a.partner_id + '|' + dt] || 0;
+    const ctr = pQ[a.partner_id].val > 1 ? 18 : 35;
+    traffic.push({ partner_id: a.partner_id, traffic_date: dt, traffic_month: dt.slice(0, 7), clicks: Math.round(su * (ctr + rnd() * 15) + rnd() * 25), signups: su });
+  }
+  const cMap = {}; customers.forEach((c) => { cMap[c.customer_id] = c; });
+  for (const p of payments) if (p.is_first_order) { const c = cMap[p.customer_id]; if (c.partner_id && p.amount_gbp >= 15) { const k = c.partner_id + '|' + p.pay_month; qByKey[k] = (qByKey[k] || 0) + 1; } }
+  for (const r of activity) { const c = cMap[r.customer_id]; if (c.partner_id) { const k = c.partner_id + '|' + r.act_month; netBy[k] = (netBy[k] || 0) + r.net_revenue_gbp; } }
+  const commissions = [];
+  for (const a of partners) for (const mo of ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10']) {
+    const k = a.partner_id + '|' + mo; const q = qByKey[k] || 0; const net = netBy[k] || 0;
+    const cpa = q * a.cpa_gbp; const rs = Math.max(0, net) * a.revshare_pct / 100;
+    commissions.push({ partner_id: a.partner_id, comm_month: mo, qualified_first_orders: q, cpa_gbp: r2(cpa), revshare_gbp: r2(rs), total_gbp: r2(cpa + rs), payout_status: mo === '2026-10' ? 'pending' : 'paid' });
+  }
+  return { customers, payments, customer_activity: activity, partners, partner_traffic: traffic, partner_commissions: commissions };
+}
+
+const D = buildDemoData();
+const DB_OF = { customers: 'Customers DB', payments: 'Customers DB', customer_activity: 'Customers DB', partners: 'Partner DB', partner_traffic: 'Partner DB', partner_commissions: 'Partner DB' };
+const COLS = {
+  customers: 'customer_id, partner_id (NULL = organic), signup_date, signup_month, country, currency, device, os, first_order_date (NULL = never ordered), tier (Member|Silver|Gold), status',
+  payments: 'payment_id, customer_id, type (order|refund), status (success|failed), amount_gbp, currency, method, provider, pay_date, pay_month, pay_week, order_number, is_first_order',
+  customer_activity: 'customer_id, act_month, orders, gross_sales_gbp, refunds_gbp, discounts_gbp, net_revenue_gbp',
+  partners: 'partner_id, partner_name, deal_type (CPA|RevShare|Hybrid), cpa_gbp, revshare_pct, manager, main_market, channel, created_at',
+  partner_traffic: 'partner_id, traffic_date, traffic_month, clicks, signups',
+  partner_commissions: 'partner_id, comm_month, qualified_first_orders, cpa_gbp, revshare_gbp, total_gbp, payout_status (paid|pending)',
+};
+
+// ================= helpers =================
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const r0 = (x) => Math.round(x), r1 = (x) => Math.round(x * 10) / 10;
+const nf = (v) => typeof v === 'number' ? v.toLocaleString('en-GB', { maximumFractionDigits: Number.isInteger(v) ? 0 : 1 }) : v;
+const gbp = (v) => '£' + nf(Math.round(v));
+const isMoney = (c) => /_gbp$/.test(c);
+const isPct = (c) => /_pct$/.test(c);
+const fmtCell = (c, v) => v == null ? '—' : /(_id)$/.test(c) ? String(v) : isMoney(c) ? '£' + nf(v) : isPct(c) ? nf(v) + '%' : nf(v);
+const pretty = (c) => c.replace(/_gbp$/, ' (£)').replace(/_pct$/, ' (%)').replace(/_/g, ' ');
+const groupBy = (rows, key) => { const m = new Map(); for (const r of rows) { const k = typeof key === 'function' ? key(r) : r[key]; if (!m.has(k)) m.set(k, []); m.get(k).push(r); } return m; };
+const sum = (rows, k) => rows.reduce((a, r) => a + (Number(typeof k === 'function' ? k(r) : r[k]) || 0), 0);
+const cMap = new Map(D.customers.map((c) => [c.customer_id, c]));
+const pMap = new Map(D.partners.map((p) => [p.partner_id, p]));
+const orders = D.payments.filter((p) => p.type === 'order');
+const okOrders = orders.filter((p) => p.status === 'success');
+const MONTHS = ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'];
+const MLABEL = { '2026-05': 'May', '2026-06': 'Jun', '2026-07': 'Jul', '2026-08': 'Aug', '2026-09': 'Sep', '2026-10': 'Oct' };
+
+// ================= analyses (results equal the SQL shown) =================
+const A = {
+  monthly: { q: 'First orders and revenue by month', title: 'First orders and revenue by month', dbs: ['Customers DB'],
+    sql: "SELECT pay_month AS month,\n       SUM(CASE WHEN is_first_order = true THEN 1 ELSE 0 END) AS first_orders,\n       ROUND(SUM(CASE WHEN status = 'success' THEN amount_gbp ELSE 0 END), 0) AS gross_sales_gbp\nFROM payments\nWHERE type = 'order'\nGROUP BY pay_month\nORDER BY pay_month",
+    run: () => MONTHS.map((m) => { const rs = orders.filter((p) => p.pay_month === m); return { month: m, first_orders: rs.filter((p) => p.is_first_order).length, gross_sales_gbp: r0(sum(rs.filter((p) => p.status === 'success'), 'amount_gbp')) }; }),
+    viz: { type: 'combo', x: 'month', bar: 'gross_sales_gbp', line: 'first_orders' },
+    say: (r) => { const b = r.reduce((a, x) => x.gross_sales_gbp > a.gross_sales_gbp ? x : a); const g = Math.round(100 * (r[r.length - 1].gross_sales_gbp / r[0].gross_sales_gbp - 1));
+      return `Revenue grew **${g}%** from May to October, and **${MLABEL[b.month]}** was the strongest month at **${gbp(b.gross_sales_gbp)}** in gross sales. Over six months the brand won **${nf(sum(r, 'first_orders'))}** first orders.\n- Takeaway: growth is steady, so next check which partners drive it (see "Top partners by net revenue").`; },
+    next: ['partners_net', 'tiers'] },
+
+  providers: { q: 'Payment success rate by provider', title: 'Payment success rate by provider', dbs: ['Customers DB'],
+    sql: "SELECT provider,\n       COUNT(*) AS attempts,\n       SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS successful,\n       ROUND(100 * SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) / COUNT(*), 1) AS success_rate_pct\nFROM payments\nWHERE type = 'order'\nGROUP BY provider\nORDER BY success_rate_pct",
+    run: () => [...groupBy(orders, 'provider')].map(([k, rs]) => { const ok = rs.filter((p) => p.status === 'success').length; return { provider: k, attempts: rs.length, successful: ok, success_rate_pct: r1(100 * ok / rs.length) }; }).sort((a, b) => a.success_rate_pct - b.success_rate_pct),
+    viz: { type: 'hbar', x: 'provider', y: 'success_rate_pct' },
+    say: (r) => { const w = r[0], b = r[r.length - 1]; const lost = r0(w.attempts - w.successful);
+      return `**${w.provider}** has the lowest success rate: **${w.success_rate_pct}%** of ${nf(w.attempts)} attempts (${nf(lost)} failed checkouts). The best is **${b.provider}** at **${b.success_rate_pct}%**.\n- Takeaway: ${w.provider} is a pay-later option, so failures often mean declined credit checks. Showing a second payment option right after a decline could recover part of these orders.`; },
+    next: ['methods', 'aov'] },
+
+  partners_net: { q: 'Top 10 partners by net revenue (Aug–Oct)', title: 'Top 10 partners by net revenue, Aug–Oct', dbs: ['Customers DB', 'Partner DB'],
+    sql: "SELECT pr.partner_name, pr.deal_type,\n       ROUND(SUM(ca.net_revenue_gbp), 0) AS net_revenue_gbp,\n       COUNT(DISTINCT ca.customer_id) AS active_customers\nFROM customer_activity ca\nJOIN customers c ON ca.customer_id = c.customer_id\nJOIN partners pr ON c.partner_id = pr.partner_id\nWHERE ca.act_month >= '2026-08'\nGROUP BY pr.partner_name, pr.deal_type\nORDER BY net_revenue_gbp DESC\nLIMIT 10",
+    run: () => { const rs = D.customer_activity.filter((a) => a.act_month >= '2026-08' && cMap.get(a.customer_id).partner_id);
+      return [...groupBy(rs, (a) => cMap.get(a.customer_id).partner_id)].map(([pid, g]) => ({ partner_name: pMap.get(pid).partner_name, deal_type: pMap.get(pid).deal_type, net_revenue_gbp: r0(sum(g, 'net_revenue_gbp')), active_customers: new Set(g.map((x) => x.customer_id)).size })).sort((a, b) => b.net_revenue_gbp - a.net_revenue_gbp).slice(0, 10); },
+    viz: { type: 'hbar', x: 'partner_name', y: 'net_revenue_gbp' },
+    say: (r) => `**${r[0].partner_name}** (${r[0].deal_type}) leads with **${gbp(r[0].net_revenue_gbp)}** net revenue from ${nf(r[0].active_customers)} active customers. Together the top 10 brought **${gbp(sum(r, 'net_revenue_gbp'))}** in three months.\n- Takeaway: ${r[0].deal_type === 'CPA' ? 'a CPA partner leads on volume, but its customers come in through discounts, so compare net revenue with what each partner costs' : 'revenue-share partners bring customers who keep buying, so their higher commission is easier to justify'} (see "Partner commissions").`,
+    next: ['commissions', 'conversion'] },
+
+  conversion: { q: 'Sign-up → first order conversion by partner', title: 'Sign-up → first order conversion by partner', dbs: ['Customers DB', 'Partner DB'],
+    sql: "SELECT pr.partner_name,\n       COUNT(*) AS signups,\n       SUM(CASE WHEN c.first_order_date IS NOT NULL THEN 1 ELSE 0 END) AS first_orders,\n       ROUND(100 * SUM(CASE WHEN c.first_order_date IS NOT NULL THEN 1 ELSE 0 END) / COUNT(*), 1) AS conversion_pct\nFROM customers c\nJOIN partners pr ON c.partner_id = pr.partner_id\nGROUP BY pr.partner_name\nORDER BY conversion_pct DESC",
+    run: () => [...groupBy(D.customers.filter((c) => c.partner_id), 'partner_id')].map(([pid, g]) => { const f = g.filter((c) => c.first_order_date).length; return { partner_name: pMap.get(pid).partner_name, signups: g.length, first_orders: f, conversion_pct: r1(100 * f / g.length) }; }).sort((a, b) => b.conversion_pct - a.conversion_pct),
+    viz: { type: 'hbar', x: 'partner_name', y: 'conversion_pct' },
+    say: (r) => { const w = r[r.length - 1];
+      return `**${r[0].partner_name}** converts best: **${r[0].conversion_pct}%** of sign-ups place a first order. The weakest is **${w.partner_name}** at **${w.conversion_pct}%** from ${nf(w.signups)} sign-ups.\n- Takeaway: coupon partners convert well but may attract discount hunters, so check their net revenue, not just conversion. ${w.partner_name} needs a traffic-quality review.`; },
+    next: ['partners_net', 'commissions'] },
+
+  commissions: { q: 'Partner commissions and cost per first order', title: 'Partner commissions and cost per first order', dbs: ['Partner DB'],
+    sql: "SELECT pr.partner_name, pr.deal_type,\n       ROUND(SUM(pc.total_gbp), 0) AS commission_gbp,\n       SUM(pc.qualified_first_orders) AS qualified_first_orders,\n       ROUND(SUM(pc.total_gbp) / SUM(pc.qualified_first_orders), 1) AS cost_per_first_order_gbp\nFROM partner_commissions pc\nJOIN partners pr ON pc.partner_id = pr.partner_id\nGROUP BY pr.partner_name, pr.deal_type\nORDER BY commission_gbp DESC",
+    run: () => [...groupBy(D.partner_commissions, 'partner_id')].map(([pid, g]) => { const q = sum(g, 'qualified_first_orders'); const t = sum(g, 'total_gbp'); return { partner_name: pMap.get(pid).partner_name, deal_type: pMap.get(pid).deal_type, commission_gbp: r0(t), qualified_first_orders: q, cost_per_first_order_gbp: q ? r1(t / q) : null }; }).sort((a, b) => b.commission_gbp - a.commission_gbp),
+    viz: { type: 'hbar', x: 'partner_name', y: 'commission_gbp' },
+    say: (r) => { const ex = r.filter((x) => x.cost_per_first_order_gbp != null).reduce((a, x) => x.cost_per_first_order_gbp > a.cost_per_first_order_gbp ? x : a);
+      return `Partners earned **${gbp(sum(r, 'commission_gbp'))}** in commission over six months. The biggest earner is **${r[0].partner_name}** (${r[0].deal_type}): **${gbp(r[0].commission_gbp)}**, or £${nf(r[0].cost_per_first_order_gbp)} per first order.\n- Takeaway: ${ex.partner_name === r[0].partner_name ? 'it also has' : '**' + ex.partner_name + '** has'} the most expensive first orders (£${nf(ex.cost_per_first_order_gbp)} each). Worth checking if those customers' lifetime value justifies it.`; },
+    next: ['partners_net', 'conversion'] },
+
+  methods: { q: 'Revenue by payment method', title: 'Revenue share by payment method', dbs: ['Customers DB'],
+    sql: "SELECT method,\n       ROUND(SUM(amount_gbp), 0) AS revenue_gbp,\n       COUNT(*) AS orders\nFROM payments\nWHERE type = 'order' AND status = 'success'\nGROUP BY method\nORDER BY revenue_gbp DESC",
+    run: () => [...groupBy(okOrders, 'method')].map(([k, g]) => ({ method: k, revenue_gbp: r0(sum(g, 'amount_gbp')), orders: g.length })).sort((a, b) => b.revenue_gbp - a.revenue_gbp),
+    viz: { type: 'donut', x: 'method', y: 'revenue_gbp' },
+    say: (r) => { const t = sum(r, 'revenue_gbp'); const pl = r.find((x) => x.method === 'Pay later');
+      return `**${r[0].method}** is the main payment method with **${Math.round(100 * r[0].revenue_gbp / t)}%** of revenue.${pl ? ` Pay later brings **${Math.round(100 * pl.revenue_gbp / t)}%**, which is significant enough that its approval rate matters.` : ''}`; },
+    next: ['providers', 'aov'] },
+
+  aov: { q: 'Average order value by country', title: 'Average order value by country', dbs: ['Customers DB'],
+    sql: "SELECT c.country,\n       ROUND(AVG(p.amount_gbp), 1) AS avg_order_gbp,\n       COUNT(*) AS orders\nFROM payments p\nJOIN customers c ON p.customer_id = c.customer_id\nWHERE p.type = 'order' AND p.status = 'success'\nGROUP BY c.country\nORDER BY avg_order_gbp DESC",
+    run: () => [...groupBy(okOrders, (p) => cMap.get(p.customer_id).country)].map(([k, g]) => ({ country: k, avg_order_gbp: r1(sum(g, 'amount_gbp') / g.length), orders: g.length })).sort((a, b) => b.avg_order_gbp - a.avg_order_gbp),
+    viz: { type: 'bar', x: 'country', y: 'avg_order_gbp' },
+    say: (r) => `The highest average order is in **${r[0].country}** (**£${nf(r[0].avg_order_gbp)}**), the lowest in **${r[r.length - 1].country}** (£${nf(r[r.length - 1].avg_order_gbp)}). The UK has the most orders: ${nf((r.find((x) => x.country === 'UK') || {}).orders || 0)}.`,
+    next: ['methods', 'tiers'] },
+
+  tiers: { q: 'VIP tiers: customers and revenue', title: 'Revenue by loyalty tier (all time)', dbs: ['Customers DB'],
+    sql: "SELECT c.tier,\n       COUNT(DISTINCT ca.customer_id) AS customers,\n       ROUND(SUM(ca.net_revenue_gbp), 0) AS net_revenue_gbp\nFROM customer_activity ca\nJOIN customers c ON ca.customer_id = c.customer_id\nGROUP BY c.tier\nORDER BY net_revenue_gbp DESC",
+    run: () => [...groupBy(D.customer_activity, (a) => cMap.get(a.customer_id).tier)].map(([k, g]) => ({ tier: k, customers: new Set(g.map((x) => x.customer_id)).size, net_revenue_gbp: r0(sum(g, 'net_revenue_gbp')) })).sort((a, b) => b.net_revenue_gbp - a.net_revenue_gbp),
+    viz: { type: 'donut', x: 'tier', y: 'net_revenue_gbp' },
+    say: (r) => { const tc = sum(r, 'customers'), tr = sum(r, 'net_revenue_gbp'); const vip = r.filter((x) => x.tier !== 'Member'); const vc = sum(vip, 'customers'), vr = sum(vip, 'net_revenue_gbp');
+      return `VIP customers (Silver and Gold) are only **${Math.round(100 * vc / tc)}%** of buyers but bring **${Math.round(100 * vr / tr)}%** of net revenue (**${gbp(vr)}**).\n- Takeaway: protecting VIPs pays off most. A list of VIPs who haven't ordered recently would be a good next step for the CRM team.`; },
+    next: ['vip_export', 'partners_net'] },
+
+  vip_export: { q: 'Export customers who spent over £120 in October', title: 'Customers who spent over £120 in October', dbs: ['Customers DB'],
+    sql: "SELECT p.customer_id, c.tier, c.country, c.partner_id,\n       COUNT(*) AS orders,\n       ROUND(SUM(p.amount_gbp), 0) AS spent_gbp\nFROM payments p\nJOIN customers c ON p.customer_id = c.customer_id\nWHERE p.type = 'order' AND p.status = 'success' AND p.pay_month = '2026-10'\nGROUP BY p.customer_id, c.tier, c.country, c.partner_id\nHAVING SUM(p.amount_gbp) > 120\nORDER BY spent_gbp DESC",
+    run: () => [...groupBy(okOrders.filter((p) => p.pay_month === '2026-10'), 'customer_id')].map(([id, g]) => { const c = cMap.get(id); return { customer_id: id, tier: c.tier, country: c.country, partner_id: c.partner_id, orders: g.length, spent_gbp: r0(sum(g, 'amount_gbp')) }; }).filter((x) => x.spent_gbp > 120).sort((a, b) => b.spent_gbp - a.spent_gbp),
+    viz: { type: 'table' },
+    say: (r) => r.length ? `Found **${r.length}** customers who spent over £120 in October, **${gbp(sum(r, 'spent_gbp'))}** in total. The list is below and can be downloaded as CSV for a CRM campaign.` : 'No customers spent over £120 in October.',
+    next: ['tiers', 'monthly'] },
+};
+const ORDER = ['monthly', 'providers', 'partners_net', 'conversion', 'commissions', 'methods', 'aov', 'tiers', 'vip_export'];
+const cache = {}; const result = (id) => (cache[id] = cache[id] || A[id].run());
+
+// ================= SVG charts =================
+const PAL = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)', 'var(--c8)'];
+const tickFmt = (c, v) => isMoney(c) ? '£' + (v >= 1000 ? nf(Math.round(v / 100) / 10) + 'k' : nf(v)) : isPct(c) ? nf(v) + '%' : nf(v);
+function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; }
+const svgText = (x, y, t, a = '') => `<text x="${x}" y="${y}" ${a} style="font:12px var(--sans);fill:var(--muted)">${esc(t)}</text>`;
+
+function barChart(rows, x, y, opts = {}) {
+  const W = 640, H = 260, L = 56, R = opts.line ? 46 : 12, T = 14, B = 30;
+  const max = niceMax(Math.max(...rows.map((r) => r[y])));
+  const iw = W - L - R, ih = H - T - B, bw = iw / rows.length;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(pretty(y))} by ${esc(pretty(x))}">`;
+  for (let i = 0; i <= 4; i++) { const v = max * i / 4, yy = T + ih - ih * i / 4; s += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" style="stroke:var(--line)"/>` + svgText(L - 8, yy + 4, tickFmt(y, v), 'text-anchor="end"'); }
+  rows.forEach((r, i) => { const h = ih * r[y] / max, bx = L + i * bw + bw * 0.18, ww = bw * 0.64;
+    s += `<rect x="${bx}" y="${T + ih - h}" width="${ww}" height="${h}" rx="4" style="fill:var(--c1)"><title>${esc(r[x])}: ${esc(fmtCell(y, r[y]))}</title></rect>`;
+    s += svgText(L + i * bw + bw / 2, H - 10, opts.xlab ? opts.xlab(r[x]) : r[x], 'text-anchor="middle"'); });
+  if (opts.line) { const lm = niceMax(Math.max(...rows.map((r) => r[opts.line])));
+    const pts = rows.map((r, i) => [L + i * bw + bw / 2, T + ih - ih * r[opts.line] / lm]);
+    s += `<polyline points="${pts.map((p) => p.join(',')).join(' ')}" style="fill:none;stroke:var(--c2);stroke-width:2.5"/>`;
+    pts.forEach((p, i) => { s += `<circle cx="${p[0]}" cy="${p[1]}" r="4" style="fill:var(--c2)"><title>${esc(rows[i][x])}: ${esc(fmtCell(opts.line, rows[i][opts.line]))}</title></circle>`; });
+    for (let i = 0; i <= 4; i++) { const yy = T + ih - ih * i / 4; s += svgText(W - R + 8, yy + 4, nf(lm * i / 4)); } }
+  s += '</svg>';
+  const leg = `<div class="legend"><span><i style="background:var(--c1)"></i>${esc(pretty(y))}</span>${opts.line ? `<span><i style="background:var(--c2)"></i>${esc(pretty(opts.line))} (right axis)</span>` : ''}</div>`;
+  return s + leg;
+}
+function hbarChart(rows, x, y, o = {}) {
+  const W = o.W || 640, rowH = 28, L = o.L || 190, R = o.R || 70, T = 6; const H = T + rows.length * rowH + 6;
+  const max = Math.max(...rows.map((r) => r[y] || 0)) || 1; const iw = W - L - R;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(pretty(y))} by ${esc(pretty(x))}">`;
+  rows.forEach((r, i) => { const yy = T + i * rowH; const w = iw * (r[y] || 0) / max; const lab = String(r[x]); const short = lab.length > 26 ? lab.slice(0, 25) + '…' : lab;
+    s += svgText(L - 10, yy + 18, short, 'text-anchor="end"');
+    s += `<rect x="${L}" y="${yy + 5}" width="${Math.max(2, w)}" height="${rowH - 10}" rx="4" style="fill:${i === 0 ? 'var(--c1)' : 'var(--c1)'};opacity:${1 - i * 0.03}"><title>${esc(lab)}: ${esc(fmtCell(y, r[y]))}</title></rect>`;
+    s += `<text x="${L + Math.max(2, w) + 6}" y="${yy + 18}" style="font:600 12px var(--sans);fill:var(--ink)">${esc(fmtCell(y, r[y]))}</text>`; });
+  return s + '</svg>';
+}
+function donutChart(rows, x, y) {
+  const t = sum(rows, y) || 1; let a0 = -Math.PI / 2; const R = 80, r = 50, C = 90;
+  let s = `<svg viewBox="0 0 180 180" role="img" aria-label="Share of ${esc(pretty(y))}">`;
+  rows.slice(0, 8).forEach((row, i) => { const frac = row[y] / t; const a1 = a0 + frac * Math.PI * 2; const large = a1 - a0 > Math.PI ? 1 : 0;
+    const p = (a, rr) => [C + rr * Math.cos(a), C + rr * Math.sin(a)];
+    const [x0, y0] = p(a0, R), [x1, y1] = p(a1 - 0.0001, R), [x2, y2] = p(a1 - 0.0001, r), [x3, y3] = p(a0, r);
+    s += `<path d="M${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${large} 0 ${x3},${y3} Z" style="fill:${PAL[i]};stroke:var(--surface);stroke-width:2"><title>${esc(row[x])}: ${esc(fmtCell(y, row[y]))} (${Math.round(frac * 100)}%)</title></path>`; a0 = a1; });
+  s += `<text x="90" y="88" text-anchor="middle" style="font:600 16px var(--sans);fill:var(--ink)">${esc(tickFmt(y, t))}</text><text x="90" y="106" text-anchor="middle" style="font:11px var(--sans);fill:var(--muted)">total</text></svg>`;
+  const leg = `<div class="legend">${rows.slice(0, 8).map((row, i) => `<span><i style="background:${PAL[i]}"></i>${esc(row[x])} · ${Math.round(100 * row[y] / t)}%</span>`).join('')}</div>`;
+  return `<div class="donut-row">${s}${leg}</div>`;
+}
+function chartFor(rows, viz) {
+  if (!rows.length || viz.type === 'table') return '';
+  if (viz.type === 'combo') return barChart(rows, viz.x, viz.bar, { line: viz.line, xlab: (m) => MLABEL[m] || m });
+  if (viz.type === 'bar') return barChart(rows, viz.x, viz.y);
+  if (viz.type === 'hbar') return hbarChart(rows, viz.x, viz.y);
+  if (viz.type === 'donut') return donutChart(rows, viz.x, viz.y);
+  return '';
+}
+
+// ================= tables / csv =================
+function tableHTML(rows) {
+  if (!rows.length) return '<div class="more">No rows</div>';
+  const cols = Object.keys(rows[0]); const num = cols.map((c) => rows.every((r) => r[c] == null || typeof r[c] === 'number') && !/_id$/.test(c));
+  const shown = rows.slice(0, 200);
+  return `<div class="tablewrap"><table><thead><tr>${cols.map((c, i) => `<th class="${num[i] ? 'n' : ''}">${esc(pretty(c))}</th>`).join('')}</tr></thead><tbody>${shown.map((r) => `<tr>${cols.map((c, i) => `<td class="${num[i] ? 'n' : ''}">${esc(fmtCell(c, r[c]))}</td>`).join('')}</tr>`).join('')}</tbody></table>${rows.length > shown.length ? `<div class="more">Showing ${shown.length} of ${rows.length}. Download CSV for the full list.</div>` : ''}</div>`;
+}
+function toCSV(rows) { if (!rows.length) return ''; const cols = Object.keys(rows[0]); const q = (v) => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }; return [cols.join(','), ...rows.map((r) => cols.map((c) => q(r[c])).join(','))].join('\n'); }
+function md(text) { const lines = esc(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').split('\n'); let h = '', ul = false;
+  for (const l of lines) { const m = l.match(/^\s*-\s+(.*)/); if (m) { if (!ul) { h += '<ul style="padding-left:18px">'; ul = true; } h += '<li>' + m[1] + '</li>'; continue; } if (ul) { h += '</ul>'; ul = false; } if (l.trim()) h += '<p>' + l + '</p>'; }
+  return h + (ul ? '</ul>' : ''); }
+function mkBtn(label, fn) { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = label; b.onclick = fn; return b; }
+
+// ================= sidebar =================
+(function () {
+  const groups = { 'Customers DB': [], 'Partner DB': [] };
+  for (const t of Object.keys(D)) groups[DB_OF[t]].push(t);
+  $('#sources').innerHTML = Object.entries(groups).map(([db, tabs]) => `<div class="src"><div class="src-head"><span>${db}</span><span class="pill">demo</span></div>${tabs.map((t) => `<details class="tbl"><summary><span>${t}</span><span>${D[t].length.toLocaleString('en-GB')}</span></summary><div class="cols">${esc(COLS[t])}</div></details>`).join('')}</div>`).join('');
+  $('#openSide').onclick = () => $('#side').classList.add('open');
+  $('#closeSide').onclick = () => $('#side').classList.remove('open');
+})();
+
+// ================= tabs =================
+function showTab(ask) {
+  $('#tabOv').setAttribute('aria-selected', !ask); $('#tabAsk').setAttribute('aria-selected', ask);
+  $('#viewOv').hidden = ask; $('#viewAsk').hidden = !ask;
+  if (ask) setTimeout(() => $('#input').focus({ preventScroll: true }), 50);
+}
+$('#tabOv').onclick = () => showTab(false); $('#tabAsk').onclick = () => showTab(true);
+
+// ================= overview =================
+(function overview() {
+  const cur = '2026-10', prev = '2026-09';
+  const net = (m) => sum(D.customer_activity.filter((a) => a.act_month === m), 'net_revenue_gbp');
+  const fo = (m) => orders.filter((p) => p.pay_month === m && p.is_first_order).length;
+  const sr = (m) => { const rs = orders.filter((p) => p.pay_month === m); return 100 * rs.filter((p) => p.status === 'success').length / rs.length; };
+  const vip = (m) => new Set(D.customer_activity.filter((a) => a.act_month === m && cMap.get(a.customer_id).tier !== 'Member').map((a) => a.customer_id)).size;
+  const delta = (a, b, pts) => { const d = pts ? a - b : 100 * (a / b - 1); const cls = d >= 0 ? 'up' : 'down'; return `<div class="d ${cls}">${d >= 0 ? '▲' : '▼'} ${Math.abs(d).toFixed(1)}${pts ? ' pts' : '%'} <span>vs Sep</span></div>`; };
+  const kpis = [
+    ['Net revenue · Oct', gbp(net(cur)), delta(net(cur), net(prev))],
+    ['First orders · Oct', nf(fo(cur)), delta(fo(cur), fo(prev))],
+    ['Payment success · Oct', sr(cur).toFixed(1) + '%', delta(sr(cur), sr(prev), true)],
+    ['Active VIP customers · Oct', nf(vip(cur)), delta(vip(cur), vip(prev))],
+  ];
+  const prov = result('providers'); const worst = prov[0]; const tiers = result('tiers'); const top5 = result('partners_net').slice(0, 5);
+  $('#ov').innerHTML = `
+    <div class="ov-head"><div><h2>Good morning, Sophie 👋</h2><p>Here's how Lumen Skin is doing in October 2026.</p></div></div>
+    <div class="kpis">${kpis.map((k) => `<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div>${k[2]}</div>`).join('')}</div>
+    <div class="insight"><span aria-hidden="true">✦</span><div><b>AI insight:</b> ${esc(worst.provider)} has the lowest payment success rate (${worst.success_rate_pct}%). ${nf(worst.attempts - worst.successful)} checkouts failed over six months. <button class="btn" id="insBtn" style="margin-left:4px">Ask why →</button></div></div>
+    <div class="grid2">
+      <div class="panel"><div class="ph"><div><h3>Revenue &amp; first orders</h3><div class="ps">Gross sales by month, first orders on the right axis</div></div><button data-ask="monthly">Ask AI →</button></div><div class="chart-box">${chartFor(result('monthly'), A.monthly.viz)}</div></div>
+      <div class="panel"><div class="ph"><div><h3>Revenue by loyalty tier</h3><div class="ps">Net revenue, all time</div></div><button data-ask="tiers">Ask AI →</button></div><div class="chart-box">${chartFor(tiers, A.tiers.viz)}</div></div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><div class="ph"><div><h3>Top partners · Aug–Oct</h3><div class="ps">By net revenue from their customers</div></div><button data-ask="partners_net">Ask AI →</button></div>${tableHTML(top5)}</div>
+      <div class="panel"><div class="ph"><div><h3>Payment success by provider</h3><div class="ps">Share of successful checkouts</div></div><button data-ask="providers">Ask AI →</button></div><div class="chart-box">${hbarChart(prov, 'provider', 'success_rate_pct', { W: 380, L: 80, R: 56 })}</div></div>
+    </div>`;
+  $('#ov').querySelectorAll('[data-ask]').forEach((b) => { b.onclick = () => { showTab(true); ask(A[b.dataset.ask].q, b.dataset.ask); }; });
+  $('#insBtn').onclick = () => { showTab(true); ask(A.providers.q, 'providers'); };
+})();
+
+// ================= chat =================
+const thread = $('#thread'), stream = $('#stream');
+const scrollDown = () => requestAnimationFrame(() => { stream.scrollTop = stream.scrollHeight; });
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const wait = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
+let busy = false;
+
+function renderAnswer(card, id) {
+  const a = A[id]; const rows = result(id);
+  card.innerHTML = `<div class="a-head"><h3>${esc(a.title)}</h3><div class="tags">${a.dbs.map((d) => `<span class="tag">${d}</span>`).join('')}</div></div><div class="answer">${md(a.say(rows))}</div>`;
+  const ch = chartFor(rows, a.viz); if (ch) { const box = document.createElement('div'); box.className = 'chart-box'; box.innerHTML = ch; card.append(box); }
+  const tbl = document.createElement('div'); tbl.innerHTML = tableHTML(rows); tbl.hidden = a.viz.type !== 'table';
+  const sq = document.createElement('pre'); sq.className = 'sql'; sq.textContent = a.sql; sq.hidden = true;
+  const bar = document.createElement('div'); bar.className = 'bar';
+  const tB = mkBtn(`Table · ${rows.length} rows`, () => { tbl.hidden = !tbl.hidden; tB.setAttribute('aria-pressed', !tbl.hidden); }); tB.setAttribute('aria-pressed', !tbl.hidden);
+  const sB = mkBtn('SQL', () => { sq.hidden = !sq.hidden; sB.setAttribute('aria-pressed', !sq.hidden); }); sB.setAttribute('aria-pressed', false);
+  const dB = mkBtn('Download CSV', () => { const blob = new Blob(['﻿' + toCSV(rows)], { type: 'text/csv' }); const u = URL.createObjectURL(blob); const l = document.createElement('a'); l.href = u; l.download = a.title.replace(/[^\w]+/g, '_').slice(0, 60) + '.csv'; document.body.append(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 1000); });
+  bar.append(tB, sB, dB); card.append(bar, tbl, sq);
+  if (a.next && a.next.length) { const nx = document.createElement('div'); nx.className = 'next'; nx.innerHTML = '<span>Next:</span>'; a.next.forEach((n) => nx.append(Object.assign(mkBtn(A[n].q, () => ask(A[n].q, n)), { className: '' }))); card.append(nx); }
+}
+function matchQ(q) {
+  const s = q.toLowerCase();
+  const rules = [[/provider|success rate|fail|declin|checkout|klarna|afterpay|stripe|adyen/, 'providers'], [/commission|cost per|cpa|paid partners|payout|expensive/, 'commissions'], [/convers|sign.?up|never order|quality/, 'conversion'], [/partner|affiliate|creator|influenc/, 'partners_net'], [/method|paypal|apple pay|share/, 'methods'], [/average|aov|basket|country|countries|market/, 'aov'], [/vip|tier|gold|silver|loyal/, 'tiers'], [/export|list|csv|spent|customers who|campaign/, 'vip_export'], [/revenue|sales|month|trend|first order|growth/, 'monthly']];
+  for (const [re, id] of rules) if (re.test(s)) return id; return null;
+}
+async function ask(text, id) {
+  text = String(text || '').trim(); if (!text || busy) return; busy = true;
+  const qd = document.createElement('div'); qd.className = 'q'; qd.textContent = text; thread.append(qd); $('#input').value = ''; autosize();
+  const card = document.createElement('div'); card.className = 'a'; thread.append(card); scrollDown();
+  id = id || matchQ(text);
+  if (!id) { card.innerHTML = `<div class="a-head"><h3>Try one of these</h3></div><div class="answer"><p>In this public demo, the assistant answers prepared questions about revenue, payments, partners, loyalty tiers and customer exports. In the live product, the AI writes new SQL for any question.</p></div>`;
+    const nx = document.createElement('div'); nx.className = 'next'; ['monthly', 'providers', 'tiers'].forEach((n) => nx.append(Object.assign(mkBtn(A[n].q, () => ask(A[n].q, n)), { className: '' }))); card.append(nx); busy = false; scrollDown(); return; }
+  card.innerHTML = '<div class="thinking"><span class="spin"></span><span class="tt">Reading the schema…</span></div><ol class="steps"></ol>';
+  const tt = card.querySelector('.tt'), st = card.querySelector('.steps'); const step = (t) => { const li = document.createElement('li'); li.textContent = t; st.append(li); scrollDown(); };
+  await wait(450); tt.textContent = 'Writing SQL…'; step('▸ ' + A[id].sql.replace(/\s+/g, ' ').slice(0, 120) + '…');
+  await wait(550); tt.textContent = 'Running the query…'; const rows = result(id); step(`  ✓ ${rows.length} rows from ${A[id].dbs.join(' + ')}`);
+  await wait(450); renderAnswer(card, id); busy = false; scrollDown();
+}
+(function chips() { for (const id of ORDER) { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = A[id].q; b.onclick = () => ask(A[id].q, id); $('#chips').append(b); } })();
+const input = $('#input');
+function autosize() { input.style.height = 'auto'; input.style.height = Math.min(140, input.scrollHeight) + 'px'; }
+input.addEventListener('input', autosize);
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(input.value); } });
+$('#composer').addEventListener('submit', (e) => { e.preventDefault(); ask(input.value); });
+})();
+</script>
+</body>
+</html>
